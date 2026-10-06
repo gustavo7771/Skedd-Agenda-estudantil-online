@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Skedd - Saindo...</title>
+    <script src="skedd-store.js"></script>
+    <script>
+        if (window.SkeddStore) {
+            SkeddStore.logout();
+        } else {
+            localStorage.removeItem('skedd_sessao');
+            localStorage.removeItem('skedd_lembrar_token');
+            window.location.href = 'index.html';
+        }
+    </script>
+</head>
+<body>
+    <p style="font-family: sans-serif; text-align: center; margin-top: 50px;">Saindo da conta...</p>
+</body>
+</html>

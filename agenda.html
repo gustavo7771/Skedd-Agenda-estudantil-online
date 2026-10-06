@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skedd: Agenda escolar</title>
+    <link rel="icon" type="image/x-icon" href="https://i.ibb.co/ymJC5sNN/Captura-de-tela-2026-05-19-100134-1.webp" id="icone-redondo">
+    
+    <!-- CSS DO FULLCALENDAR E DA APLICAÇÃO -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        #turmaProva { max-width: 100%; }
+        .btn-link-action {
+            display: block;
+            text-align: center;
+            background: #168fff;
+            color: white !important;
+            padding: 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .btn-link-action:hover { background: #1276d1; }
+        .perfil-switch-btn {
+            display: block;
+            text-align: center;
+            padding: 8px 12px;
+            background: rgba(22, 143, 255, 0.1);
+            color: #168fff;
+            border: 1px solid rgba(22, 143, 255, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+        .perfil-switch-btn:hover {
+            background: #168fff;
+            color: white;
+        }
+    </style>
+
+    <!-- BIBLIOTECAS BASE NO HEAD PARA EVITAR ERROS DE CARREGAMENTO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/locale/pt-br.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/locale/pt-br.js"></script>
+    <script src="skedd-store.js"></script>
+
+    <script>
+        // Inicialização de Usuário Segura (Nunca deixa a página sem dados nem faz redirect indevido)
+        (function() {
+            var usuario = SkeddStore.getUsuarioAtual();
+            if (!usuario) {
+                usuario = SkeddStore.garantirUsuarioPadrao();
+            }
+            window.usuarioLogadoId = usuario.id;
+            window.usuarioNivel = usuario.nivel;
+            window.usuarioAtualObj = usuario;
+        })();
+    </script>
+</head>
+    
+<body>
+
+    <header>
+        <div class="header-left">
+            <img src="https://i.ibb.co/SX9K8y69/Captura-de-tela-2026-05-19-100134-removebg-preview.webp" alt="Logo Skedd" width="75">
+            <h1 class="Titulo_header">Skedd</h1>
+        </div>
+
+        <div class="header-right" style="display: flex; align-items: center; gap: 15px;">
+            <div class="user-info-header" style="text-align: right; display: flex; flex-direction: column; justify-content: center; line-height: 1.2;">
+                <span id="nomeUsuarioHeader" style="font-weight: bold; font-size: 15px; color: var(--text, #333);">Carregando...</span>
+                <span id="detalheUsuarioHeader" style="font-size: 12px; color: #888;"></span>
+            </div>
+
+            <div style="position: relative; display: inline-block;">
+                <button class="config-btn" id="btnNotif" style="margin: 0; position: relative;" title="Notificações">🔔<span id="notif-badge" class="notif-badge" style="display: none;">0</span></button>
+                <div class="notif-menu" id="notifMenu">
+                    <h3>Notificações</h3>
+                    <ul id="listaNotificacoes" class="notif-list">
+                        <li style="color: var(--secondary); font-style: italic; padding: 10px; text-align: center;">Nenhuma notificação no momento.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="position: relative; display: inline-block;">
+                <button class="config-btn" id="btnConfig" style="margin: 0;" title="Configurações">⚙</button>
+                <div class="config-menu" id="configMenu">
+                    <h3>Configurações</h3>
+                    <button class="tema-btn" id="toggleTheme">Alternar Tema</button>
+
+                    <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 10px;">
+                        <a href="javascript:void(0)" onclick="SkeddStore.logout()" style="color: #ff3b30; text-decoration: none; font-weight: bold; display: block; text-align: center; font-size: 13px;">Sair da Conta</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+
+        <!-- PAINEL LATERAL PARA PROFESSOR OU ADMINISTRADOR -->
+        <div class="sidebar-left" id="sidebarProfessor" style="display: none;">
+            <h2>Gerenciar Avaliações</h2>
+
+            <div id="boxBannerAdmin" style="display: none; background: rgba(22, 143, 255, 0.1); border: 1px solid #168fff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <strong style="color: #168fff; display: block; margin-bottom: 10px;">Modo Administrador</strong>
+                <p style="font-size: 13px; margin: 0 0 10px 0; line-height: 1.4;">Para criar eventos para múltiplas turmas de forma avançada, utilize o painel de administração.</p>
+                <a href="admin.html" class="btn-link-action">Ir para o Dashboard Avançado</a>
+            </div>
+
+            <label id="selecao">Selecione a Turma</label>
+            <select id="turmaProva" style="width: 100%; padding: 10px; border-radius: 8px; font-size:14px; margin-bottom: 15px; background: var(--bg); color: var(--text); border: 1px solid var(--border);">
+                <!-- Preenchido via script.js -->
+            </select>
+
+            <hr style="border: 1px solid var(--border); margin: 15px 0;">
+            <label>Nome do Evento</label>
+            <input type="text" id="nomeProva" placeholder="Nome da Prova ou Evento">
+            
+            <div id="boxInputAdminNome" style="display: none;">
+                <label>Publicar Como (Exibição)</label>
+                <input type="text" id="nomeAdmin" placeholder="Ex: Direção, Coordenação...">
+            </div>
+
+            <label>Descrição</label>
+            <textarea id="descricaoProva" placeholder="Observações..." rows="3"></textarea>
+
+            <label>Data</label>
+            <input type="date" id="dataProva">
+
+            <label>Cor da marcação</label>
+            <input type="color" id="corProva" value="#168fff">
+
+            <button id="btnMarcar">Salvar Evento</button>
+
+            <hr style="border: 1px solid var(--border); margin: 20px 0;">
+            <h3 style="font-size: 16px; margin-bottom: 10px; color: var(--header);">Todas as Suas Provas</h3>
+            <div id="listaGerenciarProvas" style="max-height: 250px; overflow-y: auto; padding-right: 5px;">
+                <p style="font-style: italic; color: #888; font-size: 13px;">Carregando avaliações...</p>
+            </div>
+        </div>
+
+        <!-- PAINEL LATERAL PARA ALUNO -->
+        <div class="sidebar-left aluno-view" id="sidebarAluno" style="display: none;">
+            <h2>Área do Aluno</h2>
+            <p>Visualizando a agenda da turma: <strong id="nomeTurmaExibicaoAluno">-</strong></p>
+            
+            <div id="painelDescricaoLateral" style="margin-top: 20px; padding: 15px; border: 1px solid var(--border); border-radius: 12px; display: none; background: var(--card);">
+                <h3 style="margin-top: 0; font-size: 16px; color: var(--header);" id="tituloLateral">Título</h3>
+                <p id="descricaoLateral" style="font-size: 14px; color: var(--text);"></p>
+            </div>
+
+            <div id="painelDescricaoAluno" style="margin-top: 25px; padding: 15px; border: 1px solid var(--border); border-radius: 20px; display: none; background: var(--card); text-align: left; width: 100%; box-sizing: border-box;">
+                <h3 style="margin-top: 0; color: var(--header); font-size: 1.1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px;" id="tituloDescricaoAluno">Nome da Prova</h3>
+                <p id="textoDescricaoAluno" style="font-size: 14px; color: var(--text); line-height: 1.5; margin-top: 10px; white-space: pre-wrap;">A descrição aparecerá aqui.</p>
+            </div>
+        </div>
+
+        <!-- CALENDÁRIO CENTRAL -->
+        <div class="container-calendar">
+            <div id="calendar"></div>
+            
+            <div class="container-descricao" id="painelDescricao" style="margin-top: 20px; padding: 15px; border: 1px solid var(--border); border-radius: 20px; display: none; background: var(--card); width: 100%; box-sizing: border-box;">
+                <h3 style="margin-top: 0; color: var(--header);" id="tituloDescricaoProva">Nome da Prova</h3>
+                <p id="textoDescricaoProva" style="margin-bottom: 15px;">A descrição aparecerá aqui.</p>
+                <button id="btnDesmarcar" style="padding: 10px 20px; background-color: #ff3b30; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.3s;">Desmarcar Prova</button>
+                <button id="btnEditar" style="padding: 10px 20px; background-color: #168fff; color: white; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-left: 10px;">Editar Prova</button>
+            </div>
+        </div>
+
+        <!-- BARRA LATERAL DIREITA: AVALIAÇÕES DO DIA -->
+        <div class="sidebar-right">
+            <h2>Avaliações do Dia</h2>
+            <p id="dataSelecionada">Selecione um dia</p>
+            <ul id="listaProvas">
+                <li class="vazio">Nenhuma avaliação neste dia.</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container-rodape">
+            <p>&copy; 2026 Skedd: Agenda digital escolar. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- SCRIPT DA APLICAÇÃO -->
+    <script src="script.js"></script>
+</body>
+</html>

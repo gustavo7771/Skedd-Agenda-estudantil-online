@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skedd - Entrar ou Cadastrar</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="https://i.ibb.co/ymJC5sNN/Captura-de-tela-2026-05-19-100134-1.webp" id="icone-redondo">
+
+    <style>
+        * { box-sizing: border-box; }
+
+        .container-login {
+            background: white;
+            color: black;
+            padding: 28px 24px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .container-login h2 {
+            margin: 8px 0 0;
+            font-size: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 6px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 14px;
+            border: 1px solid #e0e5ea;
+            border-radius: 12px;
+            font-size: 16px; 
+            outline: none;
+            transition: box-shadow 0.2s, border-color 0.2s;
+            background: #fff;
+            color: #333;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #168fff;
+            box-shadow: 0 0 0 3px rgba(22, 143, 255, 0.2);
+        }
+
+        button[type="submit"], .btn-principal {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #168fff, #0077ff);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 4px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+        }
+
+        button[type="submit"]:hover,
+        button[type="submit"]:active {
+            background: linear-gradient(135deg, #1276d1, #0056b3);
+            transform: translateY(-2px);
+            box-shadow: 0 14px 45px -10px rgba(0,0,0,0.12);
+        }
+
+        .alternar {
+            text-align: center;
+            color: #168fff;
+            cursor: pointer;
+            margin-top: 16px;
+            text-decoration: underline;
+            font-size: 14px;
+        }
+
+        .msg {
+            padding: 12px;
+            margin-bottom: 14px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            display: none;
+        }
+
+        .msg-erro  { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .msg-sucesso { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+
+
+        @media (max-width: 360px) {
+            .container-login { padding: 20px 16px; }
+            .container-login h2 { font-size: 18px; }
+        }
+    </style>
+</head>
+<body class="login-page">
+
+<div class="container-login">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://i.ibb.co/ymJC5sNN/Captura-de-tela-2026-05-19-100134-1.webp" alt="Logo" width="70" class="icone-redondo">
+        <h2>Skedd</h2>
+        <p style="margin: 4px 0 0; font-size: 13px; color: #666;">Agenda Escolar Digital</p>
+    </div>
+
+    <div id="alertaErro" class="msg msg-erro"></div>
+    <div id="alertaSucesso" class="msg msg-sucesso"></div>
+
+    <!-- BOX DE LOGIN -->
+    <div id="box-login">
+        <form id="formLogin">
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="loginEmail" placeholder="Digite seu e-mail" required autofocus>
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="loginSenha" placeholder="Digite sua senha" required>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+                <input type="checkbox" id="loginLembrar" style="width: auto; margin: 0; cursor: pointer;">
+                <label for="loginLembrar" style="margin: 0; font-size: 14px; font-weight: normal; cursor: pointer; user-select: none;">Manter-me conectado</label>
+            </div>
+            
+            <button type="submit" id="btnEntrar">Entrar</button>
+        </form>
+        <p class="alternar" onclick="mudarForm(true)">Não tem conta? Cadastre-se</p>
+    </div>
+
+    <!-- BOX DE CADASTRO -->
+    <div id="box-cadastro" style="display: none;">
+        <form id="formCadastro">
+            <div class="form-group">
+                <label>Tipo de Conta</label>
+                <select id="selectNivel">
+                    <option value="aluno" selected>Aluno(a)</option>
+                    <option value="representante">Representante de Turma</option>
+                    <option value="professor">Professor(a)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="box-turma">
+                <label>Código da Turma</label>
+                <input type="text" id="inputTurma" placeholder="Digite o código da sua turma (Ex: 1001)" required>
+                <small style="font-size: 11px; color: #888; margin-top: 3px;">Turmas ativas: 1001, 2001, 3001, 21321, 272342, 1231313</small>
+            </div>
+
+            <div class="form-group">
+                <label>Número de Matrícula</label>
+                <input type="text" id="inputMatricula" placeholder="Ex: 2026001" required>
+            </div>
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" id="inputNome" placeholder="Digite o seu nome completo" required>
+            </div>
+
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="inputEmail" placeholder="Digite seu e-mail" required>
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="inputSenha" placeholder="Crie uma senha" required>
+            </div>
+
+            <div class="form-group" id="box-chave" style="display: none;">
+                <label>Chave de Validação da Escola</label>
+                <input type="text" id="inputChave" placeholder="Código institucional (Dica: SKEDE123)">
+            </div>
+
+            <button type="submit" id="btnCadastrar">Cadastrar</button>
+        </form>
+        <p class="alternar" onclick="mudarForm(false)">Já tem conta? Faça Login</p>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+<script src="skedd-store.js"></script>
+
+<script>
+    // Se já estiver logado com sessão ativa, redireciona para a agenda
+    if (SkeddStore.getUsuarioAtual(true)) {
+        window.location.href = 'agenda.html';
+    }
+
+    function exibirErro(msg) {
+        $('#alertaSucesso').hide();
+        $('#alertaErro').text(msg).fadeIn();
+    }
+
+    function exibirSucesso(msg) {
+        $('#alertaErro').hide();
+        $('#alertaSucesso').text(msg).fadeIn();
+    }
+
+
+    function mudarForm(mostrarCadastro) {
+        $('#alertaErro').hide();
+        $('#alertaSucesso').hide();
+        if (mostrarCadastro) {
+            $('#box-login').hide();
+            $('#box-cadastro').show();
+        } else {
+            $('#box-cadastro').hide();
+            $('#box-login').show();
+        }
+    }
+
+    $('#selectNivel').change(function() {
+        var nivel = $(this).val();
+        if (nivel === 'professor') {
+            $('#box-turma').hide();
+            $('#inputTurma').removeAttr('required');
+            $('#box-chave').show();
+            $('#inputChave').attr('required', true);
+        } else if (nivel === 'representante') {
+            $('#box-turma').show();
+            $('#inputTurma').attr('required', true);
+            $('#box-chave').show();
+            $('#inputChave').attr('required', true);
+        } else {
+            $('#box-turma').show();
+            $('#inputTurma').attr('required', true);
+            $('#box-chave').hide();
+            $('#inputChave').removeAttr('required');
+        }
+    });
+
+    // SUBMIT LOGIN
+    $('#formLogin').submit(function (e) {
+        e.preventDefault();
+        var email = $('#loginEmail').val();
+        var senha = $('#loginSenha').val();
+        var lembrar = $('#loginLembrar').is(':checked');
+
+        var res = SkeddStore.login(email, senha, lembrar);
+        if (res.success) {
+            window.location.href = 'agenda.html';
+        } else {
+            exibirErro(res.message);
+        }
+    });
+
+    // SUBMIT CADASTRO
+    $('#formCadastro').submit(function (e) {
+        e.preventDefault();
+        var dados = {
+            nivel: $('#selectNivel').val(),
+            turma: $('#inputTurma').val(),
+            matricula: $('#inputMatricula').val(),
+            nome: $('#inputNome').val(),
+            email: $('#inputEmail').val(),
+            senha: $('#inputSenha').val(),
+            chave: $('#inputChave').val()
+        };
+
+        var res = SkeddStore.cadastrar(dados);
+        if (res.success) {
+            exibirSucesso(res.message);
+            mudarForm(false);
+            $('#loginEmail').val(dados.email);
+            $('#loginSenha').val('');
+        } else {
+            exibirErro(res.message);
+        }
+    });
+</script>
+</body>
+</html>

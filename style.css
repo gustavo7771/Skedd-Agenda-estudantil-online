@@ -4,58 +4,69 @@
    VARIABLES & THEMES
    ========================================= */
 :root {
-    --bg: #f4f7f6;
-    --text: #111111;
+    --bg: #f8fafc;
+    --text: #0f172a;
+    /* Slate-900 para máxima legibilidade */
     --header: #168fff;
     --header-gradient: linear-gradient(135deg, #168fff, #0066cc);
     --btn-gradient: linear-gradient(135deg, #168fff, #0077ff);
     --btn-hover: linear-gradient(135deg, #1276d1, #0056b3);
     --card: #ffffff;
-    --hover: #eef2f5;
-    --border: #e0e5ea;
-    --secondary: #666666;
-    --nomeProva: #168fff;
-    --CorNomeProva: white;
-    --CorTexto: white;
-    --CorData: #168fff;
+    --hover: #e2e8f0;
+    --border: #cbd5e1;
+    /* Borda nítida e visível */
+    --secondary: #334155;
+    /* Slate-700 de alto contraste */
+    --nomeProva: #87acc4;
+    --CorNomeProva: #0f172a;
+    --CorTexto: #0f172a;
+    --CorData: #ffffff;
     --botaoMarcar: #168fff;
-    --EscritaMarcar: white;
-    --DiaHoje: #168eff80;
-    --NumHoje: black;
-    --FoterCor: #168eff80;
-    --corDescricao: black;
-    --Textdescritivo: black;
-    --selecioneT: black;
-    --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
-    --shadow-hover: 0 14px 45px -10px rgba(0, 0, 0, 0.12);
-    --Cordisciplina: white;
+    --EscritaMarcar: #ffffff;
+    --DiaHoje: #168fff;
+    --NumHoje: #ffffff;
+    /* Número branco no destaque azul de hoje */
+    --FoterCor: #e2e8f0;
+    --corDescricao: #0f172a;
+    --Textdescritivo: #0f172a;
+    --selecioneT: #0f172a;
+    --shadow-soft: 0 5px 22px -4px rgba(2, 2, 2, 0.08);
+    --shadow-hover: 0 12px 30px -5px rgba(15, 23, 42, 0.12);
+    --Cordisciplina: #0f172a;
 }
 
 body.dark-mode {
-    --bg: #121212;
-    --text: #ffffff;
-    --header: #2a2a2a;
-    --header-gradient: linear-gradient(135deg, #2a2a2a, #1a1a1a);
-    --btn-gradient: linear-gradient(135deg, #444444, #2d2d2d);
-    --btn-hover: linear-gradient(135deg, #555555, #3d3d3d);
-    --card: #1e1e1e;
-    --hover: #2b2b2b;
-    --border: #333333;
-    --secondary: #b5b5b5;
-    --nomeProva: #666666;
-    --CorNomeProva: white;
-    --CorTexto: #ffffff;
-    --CorData: #666666;
-    --botaoMarcar: #666666;
-    --EscritaMarcar: white;
-    --DiaHoje: #168effa6;
-    --NumHoje: #00000080;
-    --FoterCor: #525252b0;
-    --corDescricao: black;
-    --selecioneT: white;
-    --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
-    --shadow-hover: 0 14px 45px -10px rgba(0, 0, 0, 0.5);
-    --Cordisciplina: white;
+    --bg: #0f1117;
+    --text: #e8eaf0;
+    --header: #168fff;
+    /* azul vivo em vez de #2a2a2a escuro */
+    --header-gradient: linear-gradient(135deg, #1a1f2e, #111318);
+    --btn-gradient: linear-gradient(135deg, #168fff, #0070e0);
+    --btn-hover: linear-gradient(135deg, #1278d6, #0058b3);
+    --card: #181c27;
+    --hover: #232838;
+    --border: #2a3045;
+    --secondary: #9ba3bc;
+    /* cinza-azulado legível */
+    --nomeProva: #1e2840;
+    /* fundo escuro-azulado para campo nome */
+    --CorNomeProva: #e8eaf0;
+    --CorTexto: #e8eaf0;
+    --CorData: #1e2840;
+    /* fundo escuro-azulado para campo data */
+    --botaoMarcar: #168fff;
+    /* azul vivo no botão salvar */
+    --EscritaMarcar: #ffffff;
+    --DiaHoje: rgba(22, 143, 255, 0.55);
+    --NumHoje: #ffffff;
+    --FoterCor: rgba(22, 143, 255, 0.15);
+    --corDescricao: #e8eaf0;
+    /* texto legível no painel de descrição */
+    --Textdescritivo: #e8eaf0;
+    --selecioneT: #e8eaf0;
+    --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    --shadow-hover: 0 14px 45px -10px rgba(0, 0, 0, 0.7);
+    --Cordisciplina: #e8eaf0;
 }
 
 /* =========================================
@@ -182,9 +193,11 @@ header {
 
 .sidebar-left label {
     font-size: 0.9rem;
-    color: var(--secondary);
+    color: var(--text);
+    font-weight: 500;
     margin-bottom: -10px;
     padding-left: 10px;
+    opacity: 0.85;
 }
 
 .sidebar-right p {
@@ -247,39 +260,39 @@ footer {
 
 /* PLACEHOLDER SPECIFIC FIX */
 ::placeholder {
-    color: #888888 !important;
+    color: #64748b !important;
     opacity: 1 !important;
 }
 
 ::-webkit-input-placeholder {
-    color: #888888 !important;
+    color: #64748b !important;
     opacity: 1 !important;
 }
 
 :-ms-input-placeholder {
-    color: #888888 !important;
+    color: #64748b !important;
     opacity: 1 !important;
 }
 
 ::-moz-placeholder {
-    color: #888888 !important;
+    color: #64748b !important;
     opacity: 1 !important;
 }
 
 body.dark-mode ::placeholder {
-    color: #aaaaaa !important;
+    color: #94a3b8 !important;
 }
 
 body.dark-mode ::-webkit-input-placeholder {
-    color: #aaaaaa !important;
+    color: #94a3b8 !important;
 }
 
 body.dark-mode :-ms-input-placeholder {
-    color: #aaaaaa !important;
+    color: #94a3b8 !important;
 }
 
 body.dark-mode ::-moz-placeholder {
-    color: #aaaaaa !important;
+    color: #94a3b8 !important;
 }
 
 .sidebar-left button {
@@ -301,23 +314,120 @@ body.dark-mode ::-moz-placeholder {
     box-shadow: var(--shadow-hover);
 }
 
-#corProva {
-    background-color: #8b8c8d;
-    height: 45px;
-    padding: 5px 15px;
+/* ==============================================================
+   SELETOR DE CORES MODERNO (RODA DE CORES)
+   ============================================================== */
+.custom-color-picker-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 25px;
+    padding: 8px 16px;
     cursor: pointer;
-    width: 100%;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    margin-bottom: 8px;
     box-sizing: border-box;
+    width: 100%;
 }
 
-#nomeProva {
-    background-color: var(--nomeProva);
-    color: var(--Cordisciplina);
+.custom-color-picker-wrapper:hover {
+    border-color: #168fff;
+    box-shadow: 0 4px 14px rgba(22, 143, 255, 0.15);
 }
 
+body.dark-mode .custom-color-picker-wrapper {
+    background: #1e2840;
+    border-color: #2e3c58;
+}
+
+body.dark-mode .custom-color-picker-wrapper:hover {
+    border-color: #38bdf8;
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.2);
+}
+
+.custom-color-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    pointer-events: none;
+}
+
+.custom-color-bubble {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 2px #ffffff;
+    flex-shrink: 0;
+    transition: background-color 0.08s ease;
+}
+
+.custom-color-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.25;
+    flex: 1;
+}
+
+.custom-color-hex {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: monospace;
+    letter-spacing: 0.8px;
+    color: var(--text);
+}
+
+.custom-color-hint {
+    font-size: 11.5px;
+    color: var(--secondary);
+    font-weight: 500;
+}
+
+.custom-color-icon {
+    font-size: 18px;
+    margin-left: auto;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.custom-color-native-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+    border: none;
+    z-index: 2;
+}
+
+#nomeProva,
 #dataProva {
-    background-color: var(--CorData);
-    color: #f4f4f4;
+    background-color: #ffffff;
+    color: #0f172a;
+    border: 1px solid var(--border);
+}
+
+/* No dark mode os campos de formulário ficam com borda visível e texto legível */
+body.dark-mode #nomeProva,
+body.dark-mode #dataProva,
+body.dark-mode .sidebar-left input,
+body.dark-mode .sidebar-left select,
+body.dark-mode .sidebar-left textarea {
+    background: #1e2840;
+    color: #e8eaf0;
+    border-color: #2e3c58;
+}
+
+body.dark-mode .sidebar-left input:focus,
+body.dark-mode .sidebar-left select:focus,
+body.dark-mode .sidebar-left textarea:focus {
+    border-color: #168fff;
+    box-shadow: 0 0 0 3px rgba(22, 143, 255, 0.25);
 }
 
 #btnMarcar {
@@ -337,6 +447,7 @@ body.dark-mode ::-moz-placeholder {
 
 #listaProvas li.quadrado-prova {
     background: var(--card);
+    border: 1px solid var(--border);
     padding: 15px;
     margin-bottom: 0;
     border-radius: 16px;
@@ -344,7 +455,7 @@ body.dark-mode ::-moz-placeholder {
     color: var(--text);
     font-weight: 500;
     box-shadow: var(--shadow-soft);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     width: calc(50% - 5px);
     aspect-ratio: 1;
     box-sizing: border-box;
@@ -362,6 +473,8 @@ body.dark-mode ::-moz-placeholder {
     display: block;
     margin-bottom: 8px;
     font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
     width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -373,12 +486,32 @@ body.dark-mode ::-moz-placeholder {
 #listaProvas li.quadrado-prova .desc-preview {
     font-size: 0.85rem;
     color: var(--secondary);
+    font-weight: 500;
     margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
+}
+
+#listaProvas li.quadrado-prova .data-badge-prova {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #0369a1;
+    background: #e0f2fe;
+    border: 1px solid #bae6fd;
+    padding: 2px 7px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+body.dark-mode #listaProvas li.quadrado-prova .data-badge-prova {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.35);
 }
 
 #listaProvas li.quadrado-prova:hover {
@@ -391,6 +524,7 @@ body.dark-mode ::-moz-placeholder {
     box-shadow: none;
     color: var(--secondary);
     font-style: italic;
+    font-weight: 500;
     padding: 0;
     border: none !important;
     width: 100%;
@@ -410,6 +544,7 @@ body.dark-mode ::-moz-placeholder {
     gap: 4px;
     /* Espaço entre as bolinhas */
     padding: 2px 0;
+    pointer-events: none;
 }
 
 /* Removemos as posições (grid-areas) que formavam o desenho do dado no seu JS */
@@ -496,7 +631,8 @@ body.dark-mode ::-moz-placeholder {
 
 /* Oculta o cabeçalho de dias da semana (Dom, Seg...) via CSS */
 /* Em FC3, columnHeader: false é inválido - usamos CSS para isso */
-.fc-head, .fc-head-container {
+.fc-head,
+.fc-head-container {
     display: none !important;
 }
 
@@ -511,13 +647,37 @@ hr.fc-widget-header {
 }
 
 .fc-day {
-    cursor: pointer;
+    cursor: pointer !important;
     border-radius: 15px;
-    transition: 0.2s;
+    transition: background-color 0.18s ease, transform 0.15s ease;
+    position: relative;
 }
 
 .fc-day:hover {
     background-color: var(--hover) !important;
+}
+
+body.dark-mode .fc-day:hover {
+    background-color: rgba(255, 255, 255, 0.09) !important;
+}
+
+.fc-today.fc-day:hover {
+    background-color: var(--DiaHoje) !important;
+    filter: brightness(1.15);
+}
+
+/* Faz com que a camada de números e pontinhos não intercepte o cursor,
+   garantindo que o efeito de hover ocorra em todo o quadrado do dia (não apenas embaixo) */
+.fc-content-skeleton,
+.fc-content-skeleton table,
+.fc-content-skeleton thead,
+.fc-content-skeleton tr,
+.fc-content-skeleton td,
+.fc-day-top,
+.fc-day-number,
+.dice-container,
+.dice-dot {
+    pointer-events: none !important;
 }
 
 .fc-day-number {
@@ -526,31 +686,19 @@ hr.fc-widget-header {
     text-align: center;
     padding: 10px 0 !important;
     font-size: 1.1rem;
-    pointer-events: none;
+    font-weight: 600;
+    color: var(--text);
 }
 
-/* ---- NOVO CÓDIGO PARA AS BOLHINHAS LADO A LADO ---- */
-
-/* Transforma a célula que recebe os eventos em um Grid de no máximo 2 colunas */
-.fc-content-skeleton tbody td {
-    display: grid !important;
-    grid-template-columns: 10px 10px !important;
-    justify-content: center !important;
-    gap: 4px !important;
-    padding-top: 2px !important;
-}
-
-/* Formata o evento para ser uma bolhinha e remove as margens padrões */
-.fc-event {
+/* Oculta os eventos nativos do FullCalendar para evitar conflito com o scheduleRenderPontos (.dice-container) */
+.fc-content-skeleton tbody {
     display: none !important;
 }
 
-/* Esconde o título do evento para manter apenas a cor da bolhinha */
+.fc-event,
 .fc-content {
     display: none !important;
 }
-
-/* --------------------------------------------------- */
 
 .fc-toolbar.fc-header-toolbar {
     position: relative;
@@ -564,7 +712,7 @@ hr.fc-widget-header {
 .fc-toolbar h2 {
     margin: 0;
     font-size: 1.4rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text);
     text-transform: capitalize;
     text-align: center;
@@ -582,10 +730,9 @@ hr.fc-widget-header {
 }
 
 .fc-button {
-    background: rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(10px);
-    color: var(--text) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
     width: 42px !important;
     height: 42px !important;
     border-radius: 14px !important;
@@ -594,16 +741,18 @@ hr.fc-widget-header {
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+    transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     pointer-events: auto;
     text-shadow: none !important;
 }
 
 .fc-button:hover {
-    background: rgba(16, 140, 255, 0.986) !important;
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12) !important;
 }
 
 .fc-button:active {
@@ -616,13 +765,15 @@ hr.fc-widget-header {
 }
 
 body.dark-mode .fc-button {
-    background: rgba(255, 255, 255, 0.04) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #f1f5f9 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
 }
 
 body.dark-mode .fc-button:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .fc-state-disabled {
@@ -1080,46 +1231,53 @@ body.dark-mode .notif-denied-banner {
 /* =========================================
    MEDIA QUERIES (RESPONSIVE)
    ========================================= */
+
+/* ----------  TABLETS E MOBILE (≤ 768px) ---------- */
 @media (max-width: 768px) {
+
+    /* === LAYOUT GERAL === */
     .main-content {
         flex-direction: column !important;
         overflow: visible !important;
         min-height: auto !important;
     }
 
+    /* Ordem das seções no mobile:
+       1. Avaliações do Dia (sidebar-right)
+       2. Calendário (container-calendar)
+       3. Formulário / Área do aluno (sidebar-left) */
+    .sidebar-right {
+        order: 1;
+    }
+
+    .container-calendar {
+        order: 2;
+    }
+
+    .sidebar-left {
+        order: 3;
+    }
+
     .sidebar-left,
     .sidebar-right {
         width: 100% !important;
         max-width: 100% !important;
-        padding: 15px 16px !important;
+        padding: 18px 16px !important;
         box-sizing: border-box !important;
         overflow-y: visible !important;
         float: none !important;
     }
 
-    /* Inversão das áreas no mobile */
-    .sidebar-right {
-        order: -1;
-    }
-
-    /* Lista de provas no topo */
-    .container-calendar {
-        order: 0;
-    }
-
-    /* Calendário no meio */
-    .sidebar-left {
-        order: 1;
-    }
-
-    /* Formulário de adicionar provas no final */
-
+    /* === HEADER === */
     header {
         height: auto !important;
-        padding: 10px 15px !important;
+        padding: 10px 14px !important;
         flex-wrap: wrap !important;
         justify-content: space-between !important;
-        gap: 8px !important;
+        gap: 6px !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 200 !important;
     }
 
     header>div:first-child {
@@ -1127,14 +1285,14 @@ body.dark-mode .notif-denied-banner {
     }
 
     .Titulo_header {
-        font-size: 26px !important;
+        font-size: 24px !important;
         position: static !important;
         transform: none !important;
         margin: 0 !important;
     }
 
     header img {
-        width: 45px !important;
+        width: 38px !important;
     }
 
     .header-right {
@@ -1156,30 +1314,16 @@ body.dark-mode .notif-denied-banner {
     .notif-menu {
         right: 0 !important;
         left: auto !important;
-        width: calc(100vw - 30px) !important;
+        width: calc(100vw - 24px) !important;
         max-width: 320px !important;
         top: 55px !important;
     }
 
-    .sidebar-left input,
-    .sidebar-left textarea,
-    .sidebar-left select {
-        font-size: 16px !important;
-        padding: 12px 16px !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }
-
-    .sidebar-left button {
-        padding: 14px !important;
-        font-size: 15px !important;
-        width: 100% !important;
-    }
-
+    /* === CALENDÁRIO === */
     .container-calendar {
         width: 100% !important;
         max-width: 100% !important;
-        padding: 10px 16px 20px !important;
+        padding: 10px 12px 16px !important;
         box-sizing: border-box !important;
         overflow-y: visible !important;
     }
@@ -1190,17 +1334,22 @@ body.dark-mode .notif-denied-banner {
     }
 
     .fc-day-number {
-        font-size: 0.85rem !important;
-        padding: 6px 0 !important;
+        font-size: 0.82rem !important;
+        padding: 5px 0 !important;
     }
 
     .fc-toolbar h2 {
-        font-size: 1.1rem !important;
+        font-size: 1.05rem !important;
     }
 
     .fc-button {
-        width: 36px !important;
-        height: 36px !important;
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 16px !important;
+    }
+
+    .fc-row {
+        min-height: 52px !important;
     }
 
     .painel-descricao,
@@ -1210,11 +1359,51 @@ body.dark-mode .notif-denied-banner {
         box-sizing: border-box !important;
     }
 
-    #listaProvas li {
-        font-size: 0.9rem !important;
-        padding: 12px 16px !important;
+    /* === PAINEL DIREITO: AVALIAÇÕES DO DIA === */
+    #listaProvas {
+        gap: 8px !important;
     }
 
+    /* No mobile os quadrados ficam em coluna única para melhor leitura */
+    #listaProvas li.quadrado-prova {
+        width: 100% !important;
+        aspect-ratio: auto !important;
+        min-height: 80px !important;
+        text-align: left !important;
+        align-items: flex-start !important;
+        padding: 14px 16px !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* === FORMULÁRIO LATERAL (PROFESSOR) === */
+    .sidebar-left input,
+    .sidebar-left textarea,
+    .sidebar-left select {
+        font-size: 16px !important;
+        /* evita zoom automático no iOS */
+        padding: 12px 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .sidebar-left button {
+        padding: 14px !important;
+        font-size: 15px !important;
+        width: 100% !important;
+        margin-top: 8px !important;
+    }
+
+    /* === CARDS DE DISCIPLINAS DO ALUNO === */
+    #listaDisciplinasAluno {
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
+
+    .disc-card-aluno {
+        padding: 14px 16px !important;
+    }
+
+    /* === TOAST === */
     .toast-container {
         top: 10px !important;
         right: 10px !important;
@@ -1226,9 +1415,10 @@ body.dark-mode .notif-denied-banner {
         width: 100% !important;
     }
 
+    /* === FOOTER === */
     footer {
         text-align: center !important;
-        padding: 15px 16px !important;
+        padding: 14px 16px !important;
     }
 
     .container-rodape {
@@ -1253,13 +1443,201 @@ body.dark-mode .notif-denied-banner {
     }
 }
 
+/* ----------  CELULARES PEQUENOS (≤ 480px) ---------- */
 @media (max-width: 480px) {
+
+    .Titulo_header {
+        font-size: 20px !important;
+    }
+
+    header {
+        padding: 8px 12px !important;
+    }
+
+    .sidebar-left,
+    .sidebar-right {
+        padding: 14px 12px !important;
+    }
+
+    .container-calendar {
+        padding: 8px 8px 14px !important;
+    }
+
+    .fc-day-number {
+        font-size: 0.75rem !important;
+    }
+
+    .fc-row {
+        min-height: 46px !important;
+    }
+
+    .fc-toolbar h2 {
+        font-size: 0.95rem !important;
+    }
+
+    /* Calendário: aumenta toque mínimo para 44×44px (WCAG) */
+    .fc-day {
+        min-height: 44px !important;
+    }
+
+    /* Quadrados vão para lista simples — conteúdo primeiro */
+    #listaProvas li.quadrado-prova {
+        border-radius: 12px !important;
+        min-height: 70px !important;
+        padding: 12px 14px !important;
+    }
+
     .notif-modal {
-        padding: 24px 20px;
+        padding: 20px 16px !important;
     }
 
     .notif-denied-banner {
-        margin: 10px 12px 0;
-        font-size: 12px;
+        margin: 8px 10px 0 !important;
+        font-size: 12px !important;
     }
+
+    /* Modal de licença: ocupa quase a tela toda */
+    .modal-licenca-content {
+        padding: 18px 14px !important;
+        border-radius: 12px !important;
+    }
+
+    /* Disc cards menores */
+    .disc-card-aluno {
+        border-radius: 10px !important;
+        padding: 12px 14px !important;
+    }
+
+    .disc-card-aluno .disc-titulo {
+        font-size: 13px !important;
+    }
+}
+
+/* ==============================================================
+   CARDS DE DISCIPLINAS NA ÁREA DO ALUNO
+   ============================================================== */
+.disc-card-aluno {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .disc-card-aluno {
+    background: #1c222d;
+    border-color: #2e3848;
+}
+
+.disc-card-aluno:hover {
+    transform: translateY(-2px);
+    border-color: #168fff;
+    box-shadow: 0 4px 14px rgba(22, 143, 255, 0.18);
+}
+
+body.dark-mode .disc-card-aluno:hover {
+    border-color: #38bdf8;
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+}
+
+.disc-card-aluno.selecionada {
+    border-color: #168fff;
+    background: rgba(22, 143, 255, 0.08);
+}
+
+body.dark-mode .disc-card-aluno.selecionada {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.disc-card-aluno .disc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.disc-card-aluno .disc-titulo {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0369a1;
+    /* Azul safira nítido com alto contraste no modo claro */
+    line-height: 1.35;
+    margin: 0;
+}
+
+body.dark-mode .disc-card-aluno .disc-titulo {
+    color: #38bdf8;
+    /* Azul celeste vibrante e nítido no tema escuro */
+}
+
+.disc-card-aluno .disc-codigo {
+    font-size: 11px;
+    font-weight: 700;
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+    border: 1px solid #bae6fd;
+}
+
+body.dark-mode .disc-card-aluno .disc-codigo {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.35);
+}
+
+.disc-card-aluno .disc-professor {
+    font-size: 12.5px;
+    color: #1e293b;
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+body.dark-mode .disc-card-aluno .disc-professor {
+    color: #e2e8f0;
+}
+
+.disc-card-aluno .disc-atividades-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 8px;
+}
+
+.disc-card-aluno .disc-atividades-badge.tem-atividade {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #7dd3fc;
+    font-weight: 700;
+}
+
+body.dark-mode .disc-card-aluno .disc-atividades-badge.tem-atividade {
+    background: rgba(56, 189, 248, 0.18);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.disc-card-aluno .disc-atividades-badge.sem-atividade {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    font-weight: 600;
+}
+
+body.dark-mode .disc-card-aluno .disc-atividades-badge.sem-atividade {
+    background: rgba(148, 163, 184, 0.12);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.25);
 }

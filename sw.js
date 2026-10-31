@@ -33,7 +33,7 @@ self.addEventListener('push', function(event) {
         vibrate: [200, 100, 200],
         tag: 'skedd-notif',           // agrupa notificações repetidas
         renotify: true,
-        data: { url: data.url || 'agenda.html' }
+        data: { url: data.url || 'agenda.php' }
     };
 
     event.waitUntil(
@@ -47,14 +47,14 @@ self.addEventListener('notificationclick', function(event) {
 
     var targetUrl = event.notification.data && event.notification.data.url
         ? event.notification.data.url
-        : 'agenda.html';
+        : 'agenda.php';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
         .then(function(clientList) {
             for (var i = 0; i < clientList.length; i++) {
                 var c = clientList[i];
-                if (c.url.indexOf('agenda.html') !== -1 && 'focus' in c) {
+                if ((c.url.indexOf('agenda.php') !== -1 || c.url.indexOf('agenda.html') !== -1) && 'focus' in c) {
                     return c.focus();
                 }
             }

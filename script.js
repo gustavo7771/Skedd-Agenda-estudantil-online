@@ -56,6 +56,8 @@ $(document).ready(function () {
             } else {
                 selectTurma.append('<option value="" disabled>Nenhuma turma vinculada</option>');
             }
+
+            atualizarSelectDisciplinasProfessor(selectTurma.val());
         } else {
             // Modo Aluno
             $('#sidebarProfessor').hide();
@@ -63,7 +65,187 @@ $(document).ready(function () {
             var turmaUser = usuario.turma || '1001';
             var nomeTurma = apelidos[turmaUser] ? turmaUser + ' (' + apelidos[turmaUser] + ')' : (turmaUser || '1001');
             $('#nomeTurmaExibicaoAluno').text(nomeTurma);
+            renderizarDisciplinasAluno(turmaUser);
         }
+    }
+
+    // --- FUNÇÕES DE DISCIPLINAS NA ÁREA DO ALUNO ---
+    function renderizarDisciplinasAluno(turmaCodigo) {
+        var container = $('#listaDisciplinasAluno');
+        var badgeContador = $('#badgeQtdDisciplinasAluno');
+        if (!container.length) return;
+
+        container.empty();
+        var disciplinas = SkeddStore.getDisciplinas(turmaCodigo);
+
+        if (!disciplinas || disciplinas.length === 0) {
+            badgeContador.text('0');
+            container.append(`
+                <div style="text-align: center; color: #888; font-size: 13px; padding: 25px 10px; background: rgba(0,0,0,0.02); border-radius: 10px; border: 1px dashed var(--border);">
+                    Nenhuma disciplina cadastrada para esta turma.
+                </div>
+            `);
+            return;
+        }
+
+        badgeContador.text(disciplinas.length);
+
+        disciplinas.forEach(function (d) {
+            var total = parseInt(d.total_atividades || 0, 10);
+            var classeBadge = total > 0 ? 'tem-atividade' : 'sem-atividade';
+            var textoBadge = total > 0 ? `📅 ${total} atividade${total > 1 ? 's' : ''} marcada${total > 1 ? 's' : ''}` : 'Nenhuma atividade marcada';
+            var nomeProf = d.professor_nome ? d.professor_nome : 'Professor a definir';
+            var carga = d.carga_horaria ? `${d.carga_horaria}h` : '';
+
+            var cardHtml = `
+                <div class="disc-card-aluno" data-id="${d.id}" data-nome="${d.nome}">
+                    <div class="disc-header">
+                        <h4 class="disc-titulo">${d.nome}</h4>
+                        ${d.codigo ? `<span class="disc-codigo">${d.codigo}</span>` : ''}
+                    </div>
+                    <div class="disc-professor">
+                        <span>👨‍🏫 <strong>Prof:</strong> ${nomeProf}</span>
+                        ${carga ? `<span style="margin-left:auto; font-size:11px; opacity:0.75;">⏱️ ${carga}</span>` : ''}
+                    </div>
+                    ${d.descricao ? `<p style="font-size:11.5px; color:var(--text); opacity:0.8; margin:0 0 8px 0; line-height:1.4;">${d.descricao}</p>` : ''}
+                    <div>
+                        <span class="disc-atividades-badge ${classeBadge}">
+                            ${textoBadge}
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            var cardEl = $(cardHtml);
+            cardEl.click(function () {
+                $('.disc-card-aluno').removeClass('selecionada');
+                $(this).addClass('selecionada');
+                exibirProvasDaDisciplinaNoPainelDireito(d, turmaCodigo);
+            });
+
+            container.append(cardEl);
+        });
+    }
+
+    function provaPertenceADisciplina(p, d, turmaCodigo) {
+        if (!p) return false;
+        // Se o evento possui ID da disciplina explicitamente vinculado
+        if (p.disciplina_id && String(p.disciplina_id) === String(d.id)) {
+            return true;
+        }
+        // Se a disciplina_id não estiver setada, verifica pertinência à mesma turma
+        var mesmaTurma = (!p.turma || p.turma === 'todas' || String(p.turma) === String(turmaCodigo));
+        if (!mesmaTurma) return false;
+
+        // Vinculação por criador/professor
+        if (d.professor_id && p.criador_id && String(p.criador_id) === String(d.professor_id)) {
+            return true;
+        }
+        // Vinculação por nome da disciplina no título do evento
+        if (d.nome && p.title && p.title.toLowerCase().indexOf(d.nome.toLowerCase()) !== -1) {
+            return true;
+        }
+        // Vinculação por código da disciplina no título do evento
+        if (d.codigo && p.title && p.title.toLowerCase().indexOf(d.codigo.toLowerCase()) !== -1) {
+            return true;
+        }
+        return false;
+    }
+
+    function exibirProvasDaDisciplinaNoPainelDireito(disciplina, turmaCodigo) {
+        if ($('#tituloPainelDireito').length) {
+            $('#tituloPainelDireito').text('Avaliações da Disciplina');
+        }
+
+        var subtitulo = disciplina.nome + (disciplina.codigo ? ' (' + disciplina.codigo + ')' : '');
+        $('#dataSelecionada').text(subtitulo);
+
+        var listaHtml = $('#listaProvas');
+        listaHtml.empty();
+
+        // Obtém todas as provas da turma atual
+        var todasProvas = (window._skeddProvasAtuais && window._skeddProvasAtuais.length) ? window._skeddProvasAtuais : [];
+        if (todasProvas.length === 0 && SkeddStore) {
+            todasProvas = SkeddStore.listarProvas(turmaCodigo);
+        }
+        if (todasProvas.length === 0 && $('#calendar').length) {
+            todasProvas = $('#calendar').fullCalendar('clientEvents');
+        }
+
+        // Filtra provas que pertencem a esta disciplina
+        var provasDisc = todasProvas.filter(function (evento) {
+            return provaPertenceADisciplina(evento, disciplina, turmaCodigo);
+        });
+
+        // Ordena por data (start) ascendente
+        provasDisc.sort(function (a, b) {
+            var da = (a.start && a.start.format) ? a.start.format('YYYY-MM-DD') : (a.start || '');
+            var db = (b.start && b.start.format) ? b.start.format('YYYY-MM-DD') : (b.start || '');
+            return da.localeCompare(db);
+        });
+
+        if (provasDisc.length === 0) {
+            listaHtml.append('<li class="vazio">Nenhuma avaliação nesta disciplina.</li>');
+            return;
+        }
+
+        provasDisc.forEach(function (evento) {
+            var tituloAdmin = evento.is_admin ? '⭐ ' + evento.title : evento.title;
+            var dataFormatada = (evento.start && evento.start.format) ? evento.start.format('DD/MM/YYYY') : moment(evento.start).format('DD/MM/YYYY');
+
+            var conteudoHTML = '';
+            if (dataFormatada && dataFormatada !== 'Invalid date') {
+                conteudoHTML += '<span class="data-badge-prova">📅 ' + dataFormatada + '</span>';
+            }
+            conteudoHTML += '<strong>' + tituloAdmin + '</strong>';
+
+            if (evento.description) {
+                var autoriaAdmin = evento.is_admin ? '<span style="color:#168fff; font-size: 11px;">[' + (evento.nome_admin || 'Administração') + ']</span> ' : '';
+                conteudoHTML += '<p class="desc-preview">' + autoriaAdmin + evento.description + '</p>';
+            }
+
+            var li = $('<li class="quadrado-prova"></li>').html(conteudoHTML);
+            li.css('border-top', '8px solid ' + (evento.color || 'var(--header)'));
+            li.attr('title', 'Clique para ver a data ' + dataFormatada + ' no calendário');
+
+            li.on('click', function () {
+                if (evento.start) {
+                    var dStr = (evento.start.format) ? evento.start.format('YYYY-MM-DD') : moment(evento.start).format('YYYY-MM-DD');
+                    $('#calendar').fullCalendar('gotoDate', dStr);
+                }
+                exibirDescricaoNaLateral(evento);
+            });
+
+            listaHtml.append(li);
+        });
+    }
+
+    function atualizarSelectDisciplinasProfessor(turmaSelecionada) {
+        var selectDisc = $('#disciplinaProva');
+        if (!selectDisc.length) return;
+        selectDisc.empty();
+
+        if (!turmaSelecionada || turmaSelecionada === '') {
+            selectDisc.append('<option value="">Selecione uma turma primeiro</option>');
+            return;
+        }
+
+        selectDisc.append('<option value="">Selecione a disciplina...</option>');
+
+        // Busca disciplinas filtradas pela turma selecionada
+        var disciplinas = SkeddStore.getDisciplinas(turmaSelecionada !== 'todas' ? turmaSelecionada : null);
+
+        if (!disciplinas || disciplinas.length === 0) {
+            selectDisc.append('<option value="" disabled style="color:#888;">Nenhuma disciplina encontrada para esta turma</option>');
+            return;
+        }
+
+        disciplinas.forEach(function (d) {
+            var turmaRotulo = (turmaSelecionada === 'todas')
+                ? ' (' + (d.turma_nome || d.turma_codigo || 'Geral') + ')'
+                : '';
+            selectDisc.append(`<option value="${d.id}">${d.nome}${d.codigo ? ' [' + d.codigo + ']' : ''}${turmaRotulo}</option>`);
+        });
     }
 
     configurarInterfaceUsuario();
@@ -102,6 +284,24 @@ $(document).ready(function () {
 
     if (localStorage.getItem('tema') === 'dark') {
         $('body').addClass('dark-mode');
+    }
+
+    // --- 2.1. LÓGICA DO SELETOR DE CORES MODERNO (RODA DE CORES) ---
+    window.atualizarVisualSeletorCor = function (corHex) {
+        if (!corHex) corHex = '#168fff';
+        var hexUpper = corHex.toUpperCase();
+        var dot = document.getElementById('corPreviewDot');
+        var hex = document.getElementById('corPreviewHex');
+        if (dot) dot.style.backgroundColor = corHex;
+        if (hex) hex.textContent = hexUpper;
+    };
+
+    $(document).on('input change', '#corProva', function () {
+        window.atualizarVisualSeletorCor($(this).val());
+    });
+
+    if ($('#corProva').length) {
+        window.atualizarVisualSeletorCor($('#corProva').val() || '#168fff');
     }
 
     // --- 3. LÓGICA DO CALENDÁRIO E DEMAIS FUNÇÕES ---
@@ -206,7 +406,9 @@ $(document).ready(function () {
         locale: 'pt-br',
 
         eventRender: function (event, element) {
-            // O CSS oculta o conteúdo nativo do FC; os pontos são desenhados via scheduleRenderPontos.
+            // Oculta a renderização nativa do FC para evitar pontos duplicados/desalinhados no grid;
+            // os pontos são desenhados de forma limpa e no dia exato via scheduleRenderPontos.
+            return false;
         },
 
         eventAfterAllRender: function (view) {
@@ -232,7 +434,6 @@ $(document).ready(function () {
             if (eventosDoDia.length > 0) {
                 exibirDescricaoNaLateral(eventosDoDia[0]);
             } else {
-                $('#painelDescricaoAluno').fadeOut();
                 $('#painelDescricao').fadeOut();
             }
             atualizarPainelDireito(dataClicada);
@@ -264,15 +465,6 @@ $(document).ready(function () {
                 $('#btnEditar').hide();
             }
         }
-
-        if ($('#painelDescricaoAluno').length) {
-            var tituloAdminA = event.is_admin ? '⭐ ' + event.title : event.title;
-            $('#tituloDescricaoAluno').text(tituloAdminA).css('color', corSelecionada);
-            var autoriaAdminA = event.is_admin ? '<strong>Publicado por: ' + (event.nome_admin || 'Administração') + '</strong><br>' : '';
-            var descricaoA = event.description ? event.description : "Nenhuma descrição fornecida.";
-            $('#textoDescricaoAluno').html(autoriaAdminA + descricaoA);
-            $('#painelDescricaoAluno').fadeIn();
-        }
     }
 
     $(document).on('click', '#btnDesmarcar', function () {
@@ -283,6 +475,9 @@ $(document).ready(function () {
                 $('#calendar').fullCalendar('refetchEvents');
                 $('#painelDescricao').fadeOut();
                 alert("Prova desmarcada com sucesso!");
+                if (window.usuarioAtualObj && window.usuarioAtualObj.turma) {
+                    renderizarDisciplinasAluno(window.usuarioAtualObj.turma);
+                }
             } else {
                 alert("Erro: " + res.message);
             }
@@ -297,8 +492,13 @@ $(document).ready(function () {
             $('#descricaoProva').val(prova.description || '');
             var dFormat = (prova.start && prova.start.format) ? prova.start.format('YYYY-MM-DD') : moment(prova.start).format('YYYY-MM-DD');
             $('#dataProva').val(dFormat);
-            $('#corProva').val(prova.color || '#168fff');
+            $('#corProva').val(prova.color || '#168fff').trigger('change');
             $('#turmaProva').val(prova.turma || '');
+
+            atualizarSelectDisciplinasProfessor(prova.turma || '');
+            if (prova.disciplina_id) {
+                $('#disciplinaProva').val(prova.disciplina_id);
+            }
 
             $('#btnMarcar').text('Salvar Alterações')
                 .data('modo', 'editar')
@@ -310,8 +510,9 @@ $(document).ready(function () {
 
     $('#turmaProva').on('change', function () {
         $('#painelDescricao').fadeOut();
-        $('#painelDescricaoAluno').fadeOut();
-        if ($(this).val() === '') {
+        var valTurma = $(this).val();
+        atualizarSelectDisciplinasProfessor(valTurma);
+        if (valTurma === '') {
             dataSelecionadaGlobal = '';
             $('#listaProvas').empty().append('<li class="vazio">Selecione uma turma para ver as avaliações.</li>');
         }
@@ -324,16 +525,34 @@ $(document).ready(function () {
         var data = $('#dataProva').val();
         var col = $('#corProva').val();
         var turma = $('#turmaProva').val() || '';
+        var disciplinaId = $('#disciplinaProva').val() || null;
 
         var modo = $(this).data('modo') || 'salvar';
         var idEditado = $(this).data('idProva');
 
-        if (turma === '') {
-            alert("Por favor, selecione uma turma específica antes de marcar a prova.");
+        if (!turma || turma === '') {
+            alert("Por favor, selecione uma turma antes de marcar a prova.");
+            $('#turmaProva').focus();
             return;
         }
 
-        if (nome !== '' && data !== '') {
+        if (!disciplinaId || disciplinaId === '') {
+            alert("Por favor, selecione uma disciplina para a avaliação.");
+            $('#disciplinaProva').focus();
+            return;
+        }
+
+        if (!nome || nome.trim() === '') {
+            alert("Por favor, informe o nome do evento/avaliação.");
+            $('#nomeProva').focus();
+            return;
+        }
+
+        if (!data || data.trim() === '') {
+            alert("Por favor, informe a data da avaliação.");
+            $('#dataProva').focus();
+            return;
+        }
             var nomeAdmin = $('#nomeAdmin').length ? $('#nomeAdmin').val() : '';
             var dados = {
                 nome: nome,
@@ -341,6 +560,7 @@ $(document).ready(function () {
                 data: data,
                 col: col,
                 turma: turma,
+                disciplina_id: disciplinaId,
                 nome_admin: nomeAdmin
             };
 
@@ -359,18 +579,26 @@ $(document).ready(function () {
                 $('#nomeProva').val('');
                 $('#descricaoProva').val('');
                 $('#dataProva').val('');
-                $('#corProva').val('#168fff');
+                $('#corProva').val('#168fff').trigger('change');
+                $('#disciplinaProva').val('');
                 $('#btnMarcar').text('Salvar Evento').data('modo', 'salvar').removeData('idProva');
                 $('#painelDescricao').fadeOut();
+
+                // Se houver painel de aluno aberto, atualiza contadores de disciplinas
+                if (window.usuarioAtualObj && window.usuarioAtualObj.turma) {
+                    renderizarDisciplinasAluno(window.usuarioAtualObj.turma);
+                }
             } else {
                 alert("Erro: " + res.message);
             }
-        } else {
-            alert("Preencha o nome e a data da prova.");
-        }
     });
 
     function atualizarPainelDireito(dataStr) {
+        if ($('#tituloPainelDireito').length) {
+            $('#tituloPainelDireito').text('Avaliações do Dia');
+        }
+        $('.disc-card-aluno').removeClass('selecionada');
+
         var dataFormatada = moment(dataStr).format('DD/MM/YYYY');
         $('#dataSelecionada').text(dataFormatada);
         var todosEventos = $('#calendar').fullCalendar('clientEvents');
@@ -454,6 +682,9 @@ $(document).ready(function () {
                 $('#calendar').fullCalendar('refetchEvents');
                 $('#painelDescricao').fadeOut();
                 alert("Prova desmarcada com sucesso!");
+                if (window.usuarioAtualObj && window.usuarioAtualObj.turma) {
+                    renderizarDisciplinasAluno(window.usuarioAtualObj.turma);
+                }
             } else {
                 alert("Erro: " + res.message);
             }

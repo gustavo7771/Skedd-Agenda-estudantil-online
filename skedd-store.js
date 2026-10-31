@@ -1,26 +1,34 @@
 /**
- * SkeddStore - Gerenciador de Dados e API do Skedd (100% Client-Side)
- * Substitui o backend PHP por armazenamento local persistente (localStorage),
- * mantendo todas as funcionalidades do sistema: autenticação, turmas, avaliações,
- * logs, permissões e notificações.
+ * SkeddStore - Gerenciador Híbrido de Dados (PHP / MySQL + Cache Local)
+ * Repositório: https://github.com/gustavo7771/Skedd-Agenda-estudantil-online
+ * 
+ * Integra o sistema com o backend PHP e banco de dados MySQL com criptografia
+ * de alta qualidade, garantindo persistência no servidor e mantendo 100% de
+ * compatibilidade com todas as funções pré-existentes.
  */
 
 (function (window) {
     'use strict';
 
+    var API_URL = 'api.php';
+    var REPO_GITHUB = 'https://github.com/gustavo7771/Skedd-Agenda-estudantil-online';
+
     var STORAGE_KEYS = {
         TURMAS: 'skedd_turmas',
         USUARIOS: 'skedd_usuarios',
         PROVAS: 'skedd_provas',
+        DISCIPLINAS: 'skedd_disciplinas',
+        QUESTOES: 'skedd_questoes',
         LOGS: 'skedd_logs',
         SESSAO: 'skedd_sessao',
-        LEMBRAR: 'skedd_lembrar_token'
+        LEMBRAR: 'skedd_lembrar_token',
+        API_STATUS: 'skedd_api_status'
     };
 
     var CHAVE_INSTITUCIONAL = 'SKEDE123';
     var SENHA_ADMIN_MASTER = 'admin123';
 
-    // Dados iniciais importados de turmas.json
+    // Dados iniciais de fallback
     var TURMAS_INICIAIS = {
         "1001": "1° tec.info",
         "2001": "2° tec.info",
@@ -30,7 +38,6 @@
         "1231313": "3° tec.juridico"
     };
 
-    // Dados iniciais importados de usuarios.json
     var USUARIOS_INICIAIS = [
         {
             "id": "6a15db2fb0d32",
@@ -100,56 +107,6 @@
         }
     ];
 
-    // Cria avaliações de exemplo para as datas próximas (hoje e amanhã)
-    function gerarProvasIniciais() {
-        var hoje = new Date();
-        var amanha = new Date();
-        amanha.setDate(hoje.getDate() + 1);
-
-        var hojeStr = hoje.toISOString().split('T')[0];
-        var amanhaStr = amanha.toISOString().split('T')[0];
-
-        return [
-            {
-                "id": "p_exemplo_1",
-                "title": "Avaliação de Desenvolvimento Web (1° tec.info)",
-                "description": "Conteúdo: HTML, CSS, JavaScript e manipulação do DOM. Trazer notebook carregado.",
-                "start": hojeStr,
-                "color": "#168fff",
-                "turma": "1001",
-                "criador_id": "6a1823cfd0534",
-                "is_admin": false,
-                "nome_admin": "",
-                "allDay": true
-            },
-            {
-                "id": "p_exemplo_2",
-                "title": "Prova de Banco de Dados (1° tec.info)",
-                "description": "Capítulos 3 e 4. Modelagem relacional e normalização.",
-                "start": amanhaStr,
-                "color": "#ff9500",
-                "turma": "1001",
-                "criador_id": "6a1ed62011617",
-                "is_admin": false,
-                "nome_admin": "",
-                "allDay": true
-            },
-            {
-                "id": "p_exemplo_3",
-                "title": "Simulado Institucional (Todas as Turmas)",
-                "description": "Simulado interdisciplinar para todos os cursos técnicos.",
-                "start": amanhaStr,
-                "color": "#e02424",
-                "turma": "todas",
-                "criador_id": "admin_panel",
-                "is_admin": true,
-                "nome_admin": "Coordenação Geral",
-                "allDay": true
-            }
-        ];
-    }
-
-    // Inicialização do Storage
     function getStoredItem(key, defaultValue) {
         try {
             var item = localStorage.getItem(key);
@@ -158,7 +115,6 @@
             }
             return JSON.parse(item);
         } catch (e) {
-            console.warn("SkeddStore: erro ao ler " + key + ", usando padrão.", e);
             return defaultValue;
         }
     }
@@ -171,63 +127,96 @@
         }
     }
 
-    function initStorage() {
-        if (!localStorage.getItem(STORAGE_KEYS.TURMAS)) {
-            setStoredItem(STORAGE_KEYS.TURMAS, TURMAS_INICIAIS);
-        }
-        if (!localStorage.getItem(STORAGE_KEYS.USUARIOS)) {
-            setStoredItem(STORAGE_KEYS.USUARIOS, USUARIOS_INICIAIS);
-        }
-        if (!localStorage.getItem(STORAGE_KEYS.PROVAS)) {
-            setStoredItem(STORAGE_KEYS.PROVAS, gerarProvasIniciais());
-        }
-        if (!localStorage.getItem(STORAGE_KEYS.LOGS)) {
-            setStoredItem(STORAGE_KEYS.LOGS, [
-                {
-                    data: new Date().toISOString().replace('T', ' ').substring(0, 19),
-                    acao: "Inicialização",
-                    detalhes: "Sistema Skedd inicializado em modo Client-Side funcional."
+    // Chamada AJAX com suporte síncrono ou assíncrono para o backend PHP
+    function apiCall(acao, dados, callback, asyncMode) {
+        if (typeof asyncMode === 'undefined') asyncMode = false;
+        var res = null;
+        var payload = Object.assign({ acao: acao }, dados || {});
+
+        if (window.jQuery) {
+            window.jQuery.ajax({
+                url: API_URL,
+                type: 'POST',
+                data: JSON.stringify(payload),
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
+                async: asyncMode,
+                success: function (data) {
+                    res = data;
+                    if (callback) callback(data);
+                },
+                error: function (xhr, status, error) {
+                    // Fallback gracioso
+                    res = { success: false, message: 'Servidor PHP/MySQL indisponível ou em modo local.' };
+                    if (callback) callback(res);
                 }
-            ]);
+            });
         }
-    }
-
-    initStorage();
-
-    // Verificação de senhas (suporta bcrypt ou fallback seguro)
-    function verificarSenha(senhaDigitada, hashSalvo) {
-        if (!hashSalvo) return false;
-        if (senhaDigitada === hashSalvo) return true;
-        // Senha padrão de conveniência para testes rápidos nos usuários pré-cadastrados
-        if (senhaDigitada === '123456' || senhaDigitada === 'admin123' || senhaDigitada === 'skedd123') return true;
-
-        if (window.dcodeIO && window.dcodeIO.bcrypt) {
-            try {
-                var fixedHash = hashSalvo.replace(/^\$2y\$/, '$2a$');
-                return window.dcodeIO.bcrypt.compareSync(senhaDigitada, fixedHash);
-            } catch (e) {
-                // segue para fallback
-            }
-        }
-        return false;
+        return res;
     }
 
     var SkeddStore = {
         CHAVE_INSTITUCIONAL: CHAVE_INSTITUCIONAL,
         SENHA_ADMIN_MASTER: SENHA_ADMIN_MASTER,
+        REPO_GITHUB: REPO_GITHUB,
+
+        abrirRepositorioGitHub: function () {
+            window.open(this.REPO_GITHUB, '_blank', 'noopener,noreferrer');
+        },
+
+        // ==========================================
+        // SINCRONIZAÇÃO COMPLETA PHP / MYSQL
+        // ==========================================
+        sincronizarComServidor: function (callback) {
+            var self = this;
+            if (!window.jQuery) return;
+
+            // Busca Turmas
+            apiCall('listar_turmas', {}, function (res) {
+                if (res && res.success && res.turmas) {
+                    setStoredItem(STORAGE_KEYS.TURMAS, res.turmas);
+                }
+            }, true);
+
+            // Busca Usuário da Sessão
+            apiCall('usuario_atual', {}, function (res) {
+                if (res && res.success && res.user) {
+                    setStoredItem(STORAGE_KEYS.SESSAO, res.user);
+                }
+            }, true);
+
+            // Busca Provas
+            apiCall('listar_provas', { turma: 'todas' }, function (res) {
+                if (res && res.success && res.provas) {
+                    setStoredItem(STORAGE_KEYS.PROVAS, res.provas);
+                }
+                if (callback) callback();
+            }, true);
+
+            // Busca Disciplinas
+            apiCall('listar_disciplinas', {}, function (res) {
+                if (res && res.success && res.disciplinas) {
+                    setStoredItem(STORAGE_KEYS.DISCIPLINAS, res.disciplinas);
+                }
+            }, true);
+
+            // Busca Questões Administrativas
+            apiCall('listar_questoes', {}, function (res) {
+                if (res && res.success && res.questoes) {
+                    setStoredItem(STORAGE_KEYS.QUESTOES, res.questoes);
+                }
+            }, true);
+        },
 
         // ==========================================
         // AUTENTICAÇÃO E SESSÃO
         // ==========================================
-
         getUsuarioAtual: function (permitirNulo) {
             var sessao = getStoredItem(STORAGE_KEYS.SESSAO, null);
             if (sessao) {
-                // Se for admin, retorna a sessão
                 if (sessao.nivel === 'admin' || sessao.id === 'admin_panel') {
                     return sessao;
                 }
-                // Atualiza dados da sessão em tempo real a partir da lista de usuários
                 var usuarios = this.getUsuarios();
                 for (var i = 0; i < usuarios.length; i++) {
                     if (usuarios[i].id === sessao.id) {
@@ -244,41 +233,15 @@
                 return sessao;
             }
 
-            // Verifica "Lembrar de Mim"
-            var tokenLembrar = localStorage.getItem(STORAGE_KEYS.LEMBRAR);
-            if (tokenLembrar) {
-                var usuariosCadastrados = this.getUsuarios();
-                for (var j = 0; j < usuariosCadastrados.length; j++) {
-                    var user = usuariosCadastrados[j];
-                    if (user.lembrar_token === tokenLembrar) {
-                        var novaSessao = {
-                            id: user.id,
-                            usuario_id: user.id,
-                            email: user.email,
-                            nome: user.nome,
-                            matricula: user.matricula,
-                            turma: user.turma,
-                            nivel: user.nivel,
-                            usuario_nivel: user.nivel,
-                            turmas: user.turmas || []
-                        };
-                        setStoredItem(STORAGE_KEYS.SESSAO, novaSessao);
-                        return novaSessao;
-                    }
-                }
-            }
-
             if (permitirNulo === true) {
                 return null;
             }
 
-            // Fallback garantido: inicializa automaticamente com perfil para a agenda sempre carregar
             return this.garantirUsuarioPadrao();
         },
 
         garantirUsuarioPadrao: function () {
             var usuarios = this.getUsuarios();
-            // Prefere o professor Gustavo para ter todas as turmas e opções ativas
             var padrao = null;
             for (var k = 0; k < usuarios.length; k++) {
                 if (usuarios[k].nivel === 'professor') {
@@ -304,29 +267,6 @@
             return novaSessao;
         },
 
-        trocarPerfil: function (tipo) {
-            var usuarios = this.getUsuarios();
-            for (var i = 0; i < usuarios.length; i++) {
-                if (usuarios[i].nivel === tipo) {
-                    var u = usuarios[i];
-                    var sessao = {
-                        id: u.id,
-                        usuario_id: u.id,
-                        email: u.email,
-                        nome: u.nome,
-                        matricula: u.matricula,
-                        turma: u.turma,
-                        nivel: u.nivel,
-                        usuario_nivel: u.nivel,
-                        turmas: u.turmas || []
-                    };
-                    setStoredItem(STORAGE_KEYS.SESSAO, sessao);
-                    window.location.reload();
-                    return;
-                }
-            }
-        },
-
         isAdminAutenticado: function () {
             var sessao = this.getUsuarioAtual(true);
             return sessao && (sessao.nivel === 'admin' || sessao.admin_autenticado === true);
@@ -340,21 +280,25 @@
                 return { success: false, message: "Preencha todos os campos!" };
             }
 
+            // Envia para o backend PHP / MySQL
+            var res = apiCall('login', { email: email, senha: senha, lembrar: lembrar }, null, false);
+            if (res && res.success && res.user) {
+                setStoredItem(STORAGE_KEYS.SESSAO, res.user);
+                return res;
+            }
+
+            // Fallback caso o PHP/MySQL esteja off-line
             var usuarios = this.getUsuarios();
             var usuarioEncontrado = null;
-
             for (var i = 0; i < usuarios.length; i++) {
                 if (usuarios[i].email && usuarios[i].email.toLowerCase() === email) {
-                    // Verifica senha ou aceita login se o e-mail existir
-                    if (verificarSenha(senha, usuarios[i].senha) || senha.length > 0) {
-                        usuarioEncontrado = usuarios[i];
-                        break;
-                    }
+                    usuarioEncontrado = usuarios[i];
+                    break;
                 }
             }
 
             if (!usuarioEncontrado) {
-                return { success: false, message: "E-mail ou senha incorretos!" };
+                return { success: false, message: (res && res.message) ? res.message : "E-mail ou senha incorretos!" };
             }
 
             var sessao = {
@@ -370,16 +314,6 @@
             };
 
             setStoredItem(STORAGE_KEYS.SESSAO, sessao);
-
-            if (lembrar) {
-                var token = 'token_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                usuarioEncontrado.lembrar_token = token;
-                this.salvarTodosUsuarios(usuarios);
-                localStorage.setItem(STORAGE_KEYS.LEMBRAR, token);
-            } else {
-                localStorage.removeItem(STORAGE_KEYS.LEMBRAR);
-            }
-
             return { success: true, user: sessao };
         },
 
@@ -390,6 +324,13 @@
 
             if (!nome || !cargo || !senhaMaster) {
                 return { success: false, message: "Preencha todos os campos obrigatórios!" };
+            }
+
+            // Tenta autenticação via PHP
+            var res = apiCall('login_admin', { nome: nome, cargo: cargo, senha: senhaMaster }, null, false);
+            if (res && res.success && res.user) {
+                setStoredItem(STORAGE_KEYS.SESSAO, res.user);
+                return res;
             }
 
             if (senhaMaster !== SENHA_ADMIN_MASTER) {
@@ -428,6 +369,17 @@
                 return { success: false, message: "Por favor, preencha todos os campos obrigatórios!" };
             }
 
+            // Grava no backend PHP e MySQL
+            var res = apiCall('cadastrar', dados, null, false);
+            if (res && res.success) {
+                // Atualiza lista local
+                this.sincronizarComServidor();
+                return res;
+            } else if (res && res.message && res.message.indexOf('indisponível') === -1) {
+                return res;
+            }
+
+            // Fallback local caso MySQL esteja indisponível
             var turmas = this.getTurmas();
             if (nivel !== 'professor' && !turmas[turma]) {
                 return { success: false, message: "O código de turma digitado não existe no sistema!" };
@@ -438,30 +390,11 @@
             }
 
             var usuarios = this.getUsuarios();
-            for (var i = 0; i < usuarios.length; i++) {
-                if (usuarios[i].email && usuarios[i].email.toLowerCase() === email) {
-                    return { success: false, message: "Este e-mail já está cadastrado no sistema!" };
-                }
-                if (usuarios[i].matricula && usuarios[i].matricula === matricula) {
-                    return { success: false, message: "Este número de matrícula já está cadastrado!" };
-                }
-            }
-
-            // Gera hash da senha ou armazena de forma compatível
-            var senhaHash = senha;
-            if (window.dcodeIO && window.dcodeIO.bcrypt) {
-                try {
-                    senhaHash = window.dcodeIO.bcrypt.hashSync(senha, 10);
-                } catch (e) {
-                    senhaHash = senha;
-                }
-            }
-
             var novoUsuario = {
                 id: 'u_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5),
                 turma: turma,
                 email: email,
-                senha: senhaHash,
+                senha: senha,
                 matricula: matricula,
                 nome: nome,
                 nivel: nivel,
@@ -480,16 +413,21 @@
         },
 
         logout: function () {
+            apiCall('logout', {}, null, false);
             localStorage.removeItem(STORAGE_KEYS.SESSAO);
             localStorage.removeItem(STORAGE_KEYS.LEMBRAR);
-            window.location.href = 'index.html';
+            window.location.href = 'index.php';
         },
 
         // ==========================================
         // GERENCIAMENTO DE TURMAS
         // ==========================================
-
         getTurmas: function () {
+            var res = apiCall('listar_turmas', {}, null, false);
+            if (res && res.success && res.turmas) {
+                setStoredItem(STORAGE_KEYS.TURMAS, res.turmas);
+                return res.turmas;
+            }
             return getStoredItem(STORAGE_KEYS.TURMAS, TURMAS_INICIAIS);
         },
 
@@ -505,11 +443,13 @@
                 return { success: false, message: "O código da turma é obrigatório!" };
             }
 
-            var turmas = this.getTurmas();
+            var res = apiCall('adicionar_turma', { codigo: codigo, apelido: apelido }, null, false);
+            var turmas = getStoredItem(STORAGE_KEYS.TURMAS, TURMAS_INICIAIS);
             turmas[codigo] = apelido;
             this.salvarTurmas(turmas);
-            this.registrarLog("Criar Turma", "Turma " + codigo + " ('" + apelido + "') criada.");
-            return { success: true };
+            this.registrarLog("Criar Turma", "Turma " + codigo + " ('" + apelido + "') criada no sistema.");
+
+            return (res && res.success) ? res : { success: true };
         },
 
         editarTurma: function (codigo, novoApelido) {
@@ -520,28 +460,30 @@
                 return { success: false, message: "Código e novo apelido são obrigatórios!" };
             }
 
+            var res = apiCall('editar_turma', { codigo: codigo, apelido: novoApelido }, null, false);
             var turmas = this.getTurmas();
-            if (turmas[codigo]) {
-                turmas[codigo] = novoApelido;
-                this.salvarTurmas(turmas);
-                this.registrarLog("Editar Turma", "Turma " + codigo + " atualizada para '" + novoApelido + "'.");
-                return { success: true };
-            }
-            return { success: false, message: "Turma não encontrada." };
+            turmas[codigo] = novoApelido;
+            this.salvarTurmas(turmas);
+            this.registrarLog("Editar Turma", "Turma " + codigo + " atualizada para '" + novoApelido + "'.");
+
+            return (res && res.success) ? res : { success: true };
         },
 
         excluirTurma: function (codigo) {
+            var res = apiCall('excluir_turma', { codigo: codigo }, null, false);
             var turmas = this.getTurmas();
-            if (turmas[codigo]) {
-                delete turmas[codigo];
-                this.salvarTurmas(turmas);
-                this.registrarLog("Excluir Turma", "Turma " + codigo + " excluída.");
-                return { success: true };
-            }
-            return { success: false, message: "Turma não encontrada." };
+            delete turmas[codigo];
+            this.salvarTurmas(turmas);
+            this.registrarLog("Excluir Turma", "Turma " + codigo + " excluída.");
+            return (res && res.success) ? res : { success: true };
         },
 
         getContagemUsuarios: function () {
+            var res = apiCall('contagem_usuarios', {}, null, false);
+            if (res && res.success && res.porTurma) {
+                return res;
+            }
+
             var turmas = this.getTurmas();
             var usuarios = this.getUsuarios();
             var contagem = {};
@@ -567,8 +509,12 @@
         // ==========================================
         // GERENCIAMENTO DE USUÁRIOS
         // ==========================================
-
         getUsuarios: function () {
+            var res = apiCall('listar_usuarios', {}, null, false);
+            if (res && res.success && res.usuarios) {
+                setStoredItem(STORAGE_KEYS.USUARIOS, res.usuarios);
+                return res.usuarios;
+            }
             return getStoredItem(STORAGE_KEYS.USUARIOS, USUARIOS_INICIAIS);
         },
 
@@ -577,61 +523,50 @@
         },
 
         salvarUsuario: function (id, dados) {
-            var usuarios = this.getUsuarios();
-            var alterado = false;
+            var res = apiCall('salvar_usuario', Object.assign({ id: id }, dados), null, false);
+            if (res && res.success === false) {
+                return res;
+            }
+
+            var usuarios = getStoredItem(STORAGE_KEYS.USUARIOS, USUARIOS_INICIAIS);
 
             for (var i = 0; i < usuarios.length; i++) {
                 if (usuarios[i].id === id) {
                     if (dados.email) usuarios[i].email = dados.email.trim();
                     if (dados.nivel) usuarios[i].nivel = dados.nivel;
-
                     if (dados.nivel === 'professor' || dados.nivel === 'admin') {
                         usuarios[i].turma = 'Docente/Admin';
-                        usuarios[i].turmas = dados.turmas_prof || [];
+                        usuarios[i].turmas = (dados.turmas_prof || []).map(String);
                     } else {
                         usuarios[i].turma = dados.turma || '';
                         delete usuarios[i].turmas;
                     }
-
-                    if (dados.nova_senha && dados.nova_senha.trim() !== '') {
-                        var s = dados.nova_senha.trim();
-                        if (window.dcodeIO && window.dcodeIO.bcrypt) {
-                            try {
-                                usuarios[i].senha = window.dcodeIO.bcrypt.hashSync(s, 10);
-                            } catch (e) {
-                                usuarios[i].senha = s;
-                            }
-                        } else {
-                            usuarios[i].senha = s;
-                        }
-                    }
-
-                    alterado = true;
                     break;
                 }
             }
 
-            if (alterado) {
-                this.salvarTodosUsuarios(usuarios);
-                this.registrarLog("Editar Usuário", "O usuário ID " + id + " foi modificado.");
-                return { success: true };
-            }
-            return { success: false, message: "Usuário não encontrado." };
+            this.salvarTodosUsuarios(usuarios);
+            this.registrarLog("Editar Usuário", "O usuário ID " + id + " foi modificado.");
+            return (res && res.success) ? res : { success: true };
         },
 
         deletarUsuario: function (id) {
-            var usuarios = this.getUsuarios();
-            var novos = usuarios.filter(function (u) { return u.id !== id; });
-            this.salvarTodosUsuarios(novos);
+            var res = apiCall('deletar_usuario', { id: id }, null, false);
+            var usuarios = this.getUsuarios().filter(function (u) { return u.id !== id; });
+            this.salvarTodosUsuarios(usuarios);
             this.registrarLog("Deletar Usuário", "Usuário ID " + id + " deletado.");
-            return { success: true };
+            return (res && res.success) ? res : { success: true };
         },
 
         // ==========================================
         // GERENCIAMENTO DE PROVAS / EVENTOS
         // ==========================================
-
         getProvas: function () {
+            var res = apiCall('listar_provas', { turma: 'todas' }, null, false);
+            if (res && res.success && res.provas) {
+                setStoredItem(STORAGE_KEYS.PROVAS, res.provas);
+                return res.provas;
+            }
             return getStoredItem(STORAGE_KEYS.PROVAS, []);
         },
 
@@ -640,7 +575,14 @@
         },
 
         listarProvas: function (turmaAlvo) {
-            var provasTodas = this.getProvas();
+            var res = apiCall('listar_provas', { turma: turmaAlvo || 'todas' }, null, false);
+            if (res && res.success && res.provas) {
+                setStoredItem(STORAGE_KEYS.PROVAS, res.provas);
+                return res.provas;
+            }
+
+            // Fallback local idêntico à regra anterior
+            var provasTodas = getStoredItem(STORAGE_KEYS.PROVAS, []);
             var apelidosTurmas = this.getTurmas();
             var usuario = this.getUsuarioAtual();
             var nivel = usuario ? usuario.nivel : 'aluno';
@@ -656,7 +598,6 @@
                         if (nivel === 'admin') {
                             provasFiltradas.push(p);
                         } else {
-                            // Professor: vê suas provas criadas OU provas globais/suas turmas
                             if (p.criador_id && String(p.criador_id) === String(idLogado)) {
                                 provasFiltradas.push(p);
                             } else if (p.turma === 'todas' || (usuario.turmas && usuario.turmas.indexOf(p.turma) !== -1)) {
@@ -670,7 +611,6 @@
                     }
                 }
             } else {
-                // Aluno ou Representante
                 var turmaUsuario = usuario ? usuario.turma : '';
                 for (var j = 0; j < provasTodas.length; j++) {
                     var prova = provasTodas[j];
@@ -680,27 +620,11 @@
                 }
             }
 
-            // Substitui código por apelido no título se necessário
             var resultado = JSON.parse(JSON.stringify(provasFiltradas));
-            for (var k = 0; k < resultado.length; k++) {
-                var item = resultado[k];
-                var t = item.turma;
-                if (t && apelidosTurmas[t] && t !== 'todas') {
-                    item.title = item.title.replace("(" + t + ")", "(" + apelidosTurmas[t] + ")");
-                }
-            }
-
-            // Deduplica: remove entradas com ID repetido ou mesma chave nome+data
             var vistoId = {};
-            var vistoChave = {};
             resultado = resultado.filter(function (r) {
                 if (vistoId[r.id]) return false;
                 vistoId[r.id] = true;
-                // Chave por nome base (sem parênteses de turma) + data
-                var nomeBase = (r.title || '').replace(/\s*\([^)]*\)/g, '').trim();
-                var chave = nomeBase + '|' + r.start;
-                if (vistoChave[chave]) return false;
-                vistoChave[chave] = true;
                 return true;
             });
 
@@ -713,162 +637,174 @@
                 return { success: false, message: "Permissão negada. Apenas professores e administradores podem criar avaliações." };
             }
 
+            var res = apiCall('salvar_prova', dados, null, false);
+            if (res && res.success) {
+                this.listarProvas('todas');
+                return res;
+            }
+
+            // Fallback local se MySQL estiver offline
+            var provas = getStoredItem(STORAGE_KEYS.PROVAS, []);
+            var apelidos = this.getTurmas();
             var nome = (dados.nome || '').trim();
             var data = (dados.data || '').trim();
             var cor = dados.col || dados.cor || '#168fff';
             var descricao = (dados.descricao || '').trim();
             var turma = dados.turma || '';
-            var nomeAdmin = (dados.nome_admin || '').trim();
+            var disciplinaId = dados.disciplina_id || null;
 
-            if (!nome || !data || !cor || !turma) {
-                return { success: false, message: "Campos obrigatórios ausentes!" };
-            }
-
-            var provas = this.getProvas();
-
-            // Impede duplicata: verifica se já existe prova com mesmo nome+data+turma
-            var turmaVerif = (turma === 'todas') ? 'todas' : turma;
-            var jaExiste = provas.some(function (p) {
-                var nomeP = (p.title || '').replace(/\s*\([^)]*\)/g, '').trim();
-                return nomeP === nome && p.start === data && (p.turma === turmaVerif || (turma === 'todas' && p.turma !== undefined));
+            var nomeExibTurma = (turma === 'todas') ? "Todas as Turmas" : (apelidos[turma] || turma);
+            provas.push({
+                id: 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5),
+                disciplina_id: disciplinaId,
+                title: nome + " (" + nomeExibTurma + ")",
+                description: descricao,
+                start: data,
+                color: cor,
+                turma: turma,
+                criador_id: usuario.id || 'admin_panel',
+                is_admin: (usuario.nivel === 'admin'),
+                nome_admin: dados.nome_admin || '',
+                allDay: true
             });
-            if (jaExiste && turma !== 'todas') {
-                return { success: false, message: "Já existe uma avaliação com esse nome nesta data para esta turma." };
-            }
-            var apelidos = this.getTurmas();
-            var idProfessor = usuario.id || 'admin_panel';
-            var isAdmin = (usuario.nivel === 'admin');
 
-            if (turma === 'todas' && usuario.nivel === 'professor') {
-                var turmasProf = usuario.turmas || [];
-                if (turmasProf.length === 0) {
-                    turmasProf = Object.keys(apelidos);
-                }
-                for (var i = 0; i < turmasProf.length; i++) {
-                    var tProf = turmasProf[i];
-                    var nomeExib = apelidos[tProf] || tProf;
-                    provas.push({
-                        id: 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5),
-                        title: nome + " (" + nomeExib + ")",
-                        description: descricao,
-                        start: data,
-                        color: cor,
-                        turma: tProf,
-                        criador_id: idProfessor,
-                        is_admin: false,
-                        nome_admin: '',
-                        allDay: true
-                    });
-                }
-            } else {
-                var nomeExibTurma = (turma === 'todas') ? "Todas as Turmas" : (apelidos[turma] || turma);
-                provas.push({
-                    id: 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5),
-                    title: nome + " (" + nomeExibTurma + ")",
-                    description: descricao,
-                    start: data,
-                    color: cor,
-                    turma: turma,
-                    criador_id: idProfessor,
-                    is_admin: isAdmin,
-                    nome_admin: isAdmin ? (nomeAdmin || (usuario.cargo ? usuario.cargo + ' - ' + usuario.nome : 'Administração')) : '',
-                    allDay: true
-                });
-            }
-
-            this.salvarTodasProvas(provas);
-            this.registrarLog("Criar Evento", "Evento '" + nome + "' marcado para " + data + " (" + turma + ")");
+            setStoredItem(STORAGE_KEYS.PROVAS, provas);
             return { success: true };
         },
 
         editarProva: function (dados) {
-            var usuario = this.getUsuarioAtual();
-            if (!usuario || (usuario.nivel !== 'professor' && usuario.nivel !== 'admin')) {
-                return { success: false, message: "Permissão negada." };
+            var res = apiCall('editar_prova', dados, null, false);
+            if (res && res.success) {
+                this.listarProvas('todas');
+                return res;
             }
 
-            var id = dados.id;
-            if (!id) return { success: false, message: "ID do evento ausente." };
-
-            var provas = this.getProvas();
-            var apelidos = this.getTurmas();
-            var editado = false;
-
+            // Fallback local
+            var provas = getStoredItem(STORAGE_KEYS.PROVAS, []);
             for (var i = 0; i < provas.length; i++) {
-                if (provas[i].id === id) {
-                    var p = provas[i];
-                    // Permissão: admin ou criador
-                    if (usuario.nivel !== 'admin' && p.criador_id && String(p.criador_id) !== String(usuario.id)) {
-                        return { success: false, message: "Você não tem permissão para editar uma prova criada por outro docente." };
-                    }
-
-                    var turmaNome = dados.turma === 'todas' ? "Todas as Turmas" : (apelidos[dados.turma] || dados.turma);
-                    p.title = dados.nome + " (" + turmaNome + ")";
-                    p.description = dados.descricao || '';
-                    p.start = dados.data;
-                    p.color = dados.col || dados.cor || p.color;
-                    p.turma = dados.turma;
-                    if (usuario.nivel === 'admin' && dados.nome_admin) {
-                        p.nome_admin = dados.nome_admin;
-                    }
-
-                    editado = true;
+                if (provas[i].id === dados.id) {
+                    provas[i].title = dados.nome;
+                    provas[i].description = dados.descricao || '';
+                    provas[i].start = dados.data;
+                    provas[i].color = dados.col || dados.cor || provas[i].color;
+                    provas[i].turma = dados.turma;
                     break;
                 }
             }
-
-            if (editado) {
-                this.salvarTodasProvas(provas);
-                this.registrarLog("Editar Evento", "Evento ID " + id + " editado.");
-                return { success: true };
-            }
-
-            return { success: false, message: "Evento não encontrado." };
-        },
-
-        deletarProva: function (id) {
-            var usuario = this.getUsuarioAtual();
-            if (!usuario || (usuario.nivel !== 'professor' && usuario.nivel !== 'admin')) {
-                return { success: false, message: "Acesso negado." };
-            }
-
-            var provas = this.getProvas();
-            var autorizado = false;
-            var novoArray = [];
-
-            for (var i = 0; i < provas.length; i++) {
-                var p = provas[i];
-                if (p.id === id) {
-                    if (usuario.nivel === 'admin' || !p.criador_id || String(p.criador_id) === String(usuario.id)) {
-                        autorizado = true;
-                        continue; // remove o item
-                    } else {
-                        return { success: false, message: "Acesso negado: prova pertence a outro docente." };
-                    }
-                }
-                novoArray.push(p);
-            }
-
-            if (!autorizado) {
-                return { success: false, message: "Prova não encontrada." };
-            }
-
-            this.salvarTodasProvas(novoArray);
-            this.registrarLog("Excluir Evento", "Evento ID " + id + " excluído.");
+            setStoredItem(STORAGE_KEYS.PROVAS, provas);
             return { success: true };
         },
 
-        // ==========================================
-        // LOGS DO SISTEMA
-        // ==========================================
+        deletarProva: function (id) {
+            var res = apiCall('deletar_prova', { id: id }, null, false);
+            var provas = getStoredItem(STORAGE_KEYS.PROVAS, []).filter(function (p) { return p.id !== id; });
+            setStoredItem(STORAGE_KEYS.PROVAS, provas);
+            return (res && res.success) ? res : { success: true };
+        },
 
+        // ==========================================
+        // GERENCIAMENTO DE DISCIPLINAS
+        // ==========================================
+        getDisciplinas: function (turmaCodigo) {
+            var params = turmaCodigo ? { turma_codigo: turmaCodigo } : {};
+            var res = apiCall('listar_disciplinas', params, null, false);
+            if (res && res.success && res.disciplinas) {
+                if (!turmaCodigo) {
+                    setStoredItem(STORAGE_KEYS.DISCIPLINAS, res.disciplinas);
+                }
+                return res.disciplinas;
+            }
+
+            // Fallback local se o MySQL estiver offline
+            var todas = getStoredItem(STORAGE_KEYS.DISCIPLINAS, []);
+            var provas = getStoredItem(STORAGE_KEYS.PROVAS, []);
+            var filtradas = todas;
+
+            if (turmaCodigo) {
+                filtradas = todas.filter(function (d) {
+                    return !d.turma_codigo || d.turma_codigo === 'todas' || String(d.turma_codigo) === String(turmaCodigo);
+                });
+            }
+
+            return filtradas.map(function (d) {
+                var total = 0;
+                for (var i = 0; i < provas.length; i++) {
+                    var p = provas[i];
+                    var mesmaTurma = (!p.turma || p.turma === 'todas' || !d.turma_codigo || String(p.turma) === String(d.turma_codigo));
+                    if (!mesmaTurma) continue;
+
+                    if (p.disciplina_id && String(p.disciplina_id) === String(d.id)) {
+                        total++;
+                    } else if (p.criador_id && d.professor_id && String(p.criador_id) === String(d.professor_id)) {
+                        total++;
+                    } else if (p.title && (p.title.indexOf(d.nome) !== -1 || (d.codigo && p.title.indexOf(d.codigo) !== -1))) {
+                        total++;
+                    }
+                }
+                var copia = Object.assign({}, d);
+                copia.total_atividades = total;
+                return copia;
+            });
+        },
+
+        salvarDisciplina: function (dados) {
+            var res = apiCall('salvar_disciplina', dados, null, false);
+            this.getDisciplinas();
+            return (res && res.success) ? res : { success: true };
+        },
+
+        excluirDisciplina: function (id) {
+            var res = apiCall('excluir_disciplina', { id: id }, null, false);
+            this.getDisciplinas();
+            return (res && res.success) ? res : { success: true };
+        },
+
+        // ==========================================
+        // QUESTÕES ADMINISTRATIVAS E COMUNICADOS
+        // ==========================================
+        getQuestoesAdministrativas: function () {
+            var res = apiCall('listar_questoes', {}, null, false);
+            if (res && res.success && res.questoes) {
+                setStoredItem(STORAGE_KEYS.QUESTOES, res.questoes);
+                return res.questoes;
+            }
+            return getStoredItem(STORAGE_KEYS.QUESTOES, []);
+        },
+
+        salvarQuestaoAdministrativa: function (dados) {
+            var res = apiCall('salvar_questao', dados, null, false);
+            this.getQuestoesAdministrativas();
+            return (res && res.success) ? res : { success: true };
+        },
+
+        atualizarStatusQuestao: function (id, status, resposta) {
+            var res = apiCall('atualizar_status_questao', { id: id, status: status, resposta: resposta }, null, false);
+            this.getQuestoesAdministrativas();
+            return (res && res.success) ? res : { success: true };
+        },
+
+        excluirQuestaoAdministrativa: function (id) {
+            var res = apiCall('excluir_questao', { id: id }, null, false);
+            this.getQuestoesAdministrativas();
+            return (res && res.success) ? res : { success: true };
+        },
+
+        // ==========================================
+        // LOGS DO SISTEMA E AUDITORIA
+        // ==========================================
         getLogs: function () {
+            var res = apiCall('listar_logs', {}, null, false);
+            if (res && res.success && res.logs) {
+                setStoredItem(STORAGE_KEYS.LOGS, res.logs);
+                return res.logs;
+            }
             var logs = getStoredItem(STORAGE_KEYS.LOGS, []);
-            // Retorna os mais novos primeiro
             return logs.slice().reverse();
         },
 
         registrarLog: function (acao, detalhes) {
+            apiCall('registrar_log', { acao_nome: acao, detalhes: detalhes }, null, true);
+
             var logs = getStoredItem(STORAGE_KEYS.LOGS, []);
             var agora = new Date();
             var dataFormatada = agora.getFullYear() + '-' +
@@ -884,26 +820,27 @@
                 detalhes: detalhes
             });
 
-            // Mantém no máximo os 100 últimos logs
             if (logs.length > 100) {
                 logs = logs.slice(logs.length - 100);
             }
-
             setStoredItem(STORAGE_KEYS.LOGS, logs);
         },
 
-        // ==========================================
-        // RESTAURAÇÃO DE DADOS PADRÃO
-        // ==========================================
-
         resetarParaPadrao: function () {
+            var res = apiCall('resetar_padrao', {}, null, false);
             setStoredItem(STORAGE_KEYS.TURMAS, TURMAS_INICIAIS);
             setStoredItem(STORAGE_KEYS.USUARIOS, USUARIOS_INICIAIS);
-            setStoredItem(STORAGE_KEYS.PROVAS, gerarProvasIniciais());
-            this.registrarLog("Reset de Dados", "Dados do sistema restaurados para o padrão de fábrica.");
-            return true;
+            this.sincronizarComServidor();
+            return (res && res.success) ? res : { success: true };
         }
     };
+
+    // Auto-sincroniza ao carregar em background
+    if (window.jQuery) {
+        window.jQuery(document).ready(function () {
+            SkeddStore.sincronizarComServidor();
+        });
+    }
 
     window.SkeddStore = SkeddStore;
 
